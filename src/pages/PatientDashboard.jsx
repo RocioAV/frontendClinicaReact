@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth, useToast } from '../App'
+import TurnoDetalleModal from '../components/TurnoDetalleModal'
 import { desvincularGoogle, getPaciente, updatePaciente } from '../services/pacienteService'
 import { getTurnoById, getTurnosByEstado, getTurnosByPaciente, cancelTurno } from '../services/turnoService'
 import { request } from '../services/api'
 import { uploadFileWithProgress } from '../services/storageService'
-import { subirArchivoMetadata } from '../services/archivoService'
+import { eliminarArchivo, subirArchivoMetadata } from '../services/archivoService'
 
 const estadosTurno = [
   { value: 'todos', label: 'Todos', icon: 'bi-list-check' },
@@ -322,6 +323,32 @@ export default function PatientDashboard() {
     }
   }
 
+  const handleDeleteArchivoPago = async (archivo) => {
+    if (!archivo?._id || !detalleTurno?._id) return
+
+    // Seguridad: paciente solo puede eliminar archivos de tipo 'pago'
+    if (archivo.tipo !== 'pago') {
+      pushToast({ variant: 'warning', title: 'Acción no permitida', message: 'No está permitido eliminar archivos médicos.' })
+      return
+    }
+
+    try {
+      await eliminarArchivo(archivo._id)
+      setDetalleTurno((current) => ({
+        ...current,
+        archivos: Array.isArray(current?.archivos) ? current.archivos.filter((item) => item._id !== archivo._id) : [],
+      }))
+      setTurnos((list) => list.map((turno) => (
+        turno._id === detalleTurno._id
+          ? { ...turno, archivos: Array.isArray(turno.archivos) ? turno.archivos.filter((item) => item._id !== archivo._id) : [] }
+          : turno
+      )))
+      pushToast({ variant: 'success', title: 'Éxito', message: 'Comprobante eliminado correctamente.' })
+    } catch (error) {
+      pushToast({ variant: 'danger', title: 'Error', message: 'No se pudo eliminar el comprobante.' })
+    }
+  }
+
   const getArchivosPago = (archivos) => (Array.isArray(archivos) ? archivos.filter((archivo) => archivo.tipo === 'pago') : [])
   const getArchivosMedicos = (archivos) => (Array.isArray(archivos) ? archivos.filter((archivo) => archivo.tipo === 'medico') : [])
 
@@ -589,60 +616,18 @@ export default function PatientDashboard() {
         </div>
       )}
 
-      {mostrarModalDetalle && detalleTurno && (
-        <div className="modal fade show d-block custom-modal-backdrop">
-          <div className="modal-dialog modal-dialog-centered modal-lg">
-            <div className="modal-content shadow rounded-4 border-0">
-              <div className="modal-header bg-primary bg-opacity-10 border-0 rounded-top-4">
-                <h5 className="modal-title text-primary d-flex align-items-center gap-2"><i className="bi bi-clipboard-data" /> Detalles del turno</h5>
-                <button type="button" className="btn-close" onClick={() => setMostrarModalDetalle(false)} aria-label="Cerrar" />
-              </div>
-              <div className="modal-body py-4 text-start">
-                <div className="row g-3">
-                  <div className="col-md-6"><strong>Doctor:</strong> {detalleTurno.doctor?.nombre} {detalleTurno.doctor?.apellido}</div>
-                  <div className="col-md-6"><strong>Especialidad:</strong> {detalleTurno.doctor?.especialidad?.nombre}</div>
-                  <div className="col-md-6"><strong>Fecha:</strong> {detalleTurno.fecha}</div>
-                  <div className="col-md-6"><strong>Hora:</strong> {detalleTurno.hora}</div>
-                  <div className="col-12"><strong>Observaciones:</strong><div className="mt-1 text-muted">{detalleTurno.observaciones || 'Sin observaciones'}</div></div>
-                  <div className="col-12">
-                    <strong>Archivos de pago:</strong>
-                    {getArchivosPago(detalleTurno.archivos).length > 0 ? (
-                      <ul className="list-group list-group-flush mt-2">
-                        {getArchivosPago(detalleTurno.archivos).map((archivo) => <li key={archivo._id} className="list-group-item"><a href={archivo.url} target="_blank" rel="noreferrer">{archivo.nombre || archivo.url}</a></li>)}
-                      </ul>
-                    ) : <div className="text-muted mt-1">No hay comprobantes cargados.</div>}
-                    <div className="mt-3">
-                      <small className="text-muted d-block mb-2">Si abonaste en efectivo o transferencia, puedes subir tu comprobante aquí.</small>
-                      <div className="d-flex flex-column flex-sm-row align-items-start gap-2">
-                        <input type="file" className="form-control form-control-sm" onChange={(e) => setArchivoPagoFile(e.target.files?.[0] || null)} />
-                        <button type="button" className="btn btn-primary btn-sm" onClick={handleUploadPago} disabled={subiendoArchivoPago || !archivoPagoFile}>
-                          {subiendoArchivoPago ? `Subiendo ${uploadProgress}%` : 'Subir comprobante'}
-                        </button>
-                      </div>
-                      {subiendoArchivoPago && (
-                        <div className="progress mt-2" style={{ height: '6px' }}>
-                          <div className="progress-bar" role="progressbar" style={{ width: `${uploadProgress}%` }} aria-valuenow={uploadProgress} aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="col-12">
-                    <strong>Archivos médicos:</strong>
-                    {getArchivosMedicos(detalleTurno.archivos).length > 0 ? (
-                      <ul className="list-group list-group-flush mt-2">
-                        {getArchivosMedicos(detalleTurno.archivos).map((archivo) => <li key={archivo._id} className="list-group-item"><a href={archivo.url} target="_blank" rel="noreferrer">{archivo.nombre || archivo.url}</a></li>)}
-                      </ul>
-                    ) : <div className="text-muted mt-1">No hay archivos médicos cargados.</div>}
-                  </div>
-                </div>
-              </div>
-                <div className="modal-footer border-0 pb-4 pt-0">
-                <button type="button" className="btn btn-outline-secondary px-4" onClick={async () => { setMostrarModalDetalle(false); await cargarTurnos(); }}><i className="bi bi-x-lg" /> Cerrar</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <TurnoDetalleModal
+        open={mostrarModalDetalle}
+        turno={detalleTurno}
+        variant="patient"
+        onClose={async () => { setMostrarModalDetalle(false); await cargarTurnos() }}
+        onUploadPago={handleUploadPago}
+        archivoPagoFile={archivoPagoFile}
+        onArchivoPagoChange={(event) => setArchivoPagoFile(event.target.files?.[0] || null)}
+        subiendoArchivoPago={subiendoArchivoPago}
+        uploadProgress={uploadProgress}
+        onDeleteArchivo={handleDeleteArchivoPago}
+      />
 
       
     </section>

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useToast } from '../App'
-import { subirArchivoMetadata } from '../services/archivoService'
 import { actualizarDoctor, getDoctorById } from '../services/doctorService'
+import TurnoDetalleModal from '../components/TurnoDetalleModal'
+import { eliminarArchivo } from '../services/archivoService'
+import { subirArchivoMetadata } from '../services/archivoService'
 import { uploadFileWithProgress } from '../services/storageService'
 import { actualizarDetallesTurno, cancelTurno, getTurnosByDoctor, marcarRealizado } from '../services/turnoService'
 
@@ -51,7 +53,6 @@ export default function MainDoctor() {
   const [guardandoObservacion, setGuardandoObservacion] = useState(false)
   const [modalModo, setModalModo] = useState(null)
   const [turnoDetalle, setTurnoDetalle] = useState(null)
-  const [archivoTipo, setArchivoTipo] = useState('medico')
   const [archivoNombre, setArchivoNombre] = useState('')
   const [archivoFile, setArchivoFile] = useState(null)
   const [subiendoArchivo, setSubiendoArchivo] = useState(false)
@@ -130,7 +131,6 @@ export default function MainDoctor() {
 
   const abrirDetalleTurno = (turno) => {
     setTurnoDetalle(turno)
-    setArchivoTipo('medico')
     setArchivoNombre('')
     setArchivoFile(null)
     setArchivoProgress(0)
@@ -139,7 +139,6 @@ export default function MainDoctor() {
 
   const cerrarDetalleTurno = () => {
     setTurnoDetalle(null)
-    setArchivoTipo('medico')
     setArchivoNombre('')
     setArchivoFile(null)
     setArchivoProgress(0)
@@ -151,6 +150,32 @@ export default function MainDoctor() {
     setArchivoFile(selectedFile)
     if (selectedFile && !archivoNombre) {
       setArchivoNombre(selectedFile.name)
+    }
+  }
+
+  const eliminarArchivoDetalle = async (archivo) => {
+    if (!archivo?._id || !turnoDetalle?._id) return
+
+    // Seguridad: solo permitir que el doctor elimine archivos médicos
+    if (archivo.tipo !== 'medico') {
+      pushToast({ variant: 'warning', title: 'Acción no permitida', message: 'Solo se pueden eliminar archivos médicos desde esta vista.' })
+      return
+    }
+
+    try {
+      await eliminarArchivo(archivo._id)
+      setTurnoDetalle((current) => ({
+        ...current,
+        archivos: Array.isArray(current?.archivos) ? current.archivos.filter((item) => item._id !== archivo._id) : [],
+      }))
+      setTurnos((current) => current.map((turno) => (
+        turno._id === turnoDetalle._id
+          ? { ...turno, archivos: Array.isArray(turno.archivos) ? turno.archivos.filter((item) => item._id !== archivo._id) : [] }
+          : turno
+      )))
+      pushToast({ variant: 'success', title: 'Éxito', message: 'Archivo eliminado correctamente.' })
+    } catch (error) {
+      pushToast({ variant: 'danger', title: 'Error', message: 'No se pudo eliminar el archivo.' })
     }
   }
 
@@ -169,14 +194,14 @@ export default function MainDoctor() {
       const storagePath = `doctores/${idDoctor}/pacientes/${pacienteId}/turnos/${turnoDetalle._id}/${Date.now()}_${archivoFile.name}`
       const url = await uploadFileWithProgress(archivoFile, storagePath, setArchivoProgress)
       const response = await subirArchivoMetadata(turnoDetalle._id, {
-        tipo: archivoTipo,
+        tipo: 'medico',
         url,
         nombre: nombreFinal,
       })
 
       const nuevoArchivo = response?.archivo || {
         _id: `${Date.now()}`,
-        tipo: archivoTipo,
+        tipo: 'medico',
         url,
         nombre: nombreFinal,
       }
@@ -496,124 +521,24 @@ export default function MainDoctor() {
       )}
 
       {turnoDetalle && (
-        <div className="modal fade show d-block custom-modal-backdrop">
-          <div className="modal-dialog modal-dialog-centered modal-lg">
-            <div className="modal-content shadow rounded-4 border-0">
-              <div className="modal-header bg-primary bg-opacity-10 border-0 rounded-top-4">
-                <h5 className="modal-title text-primary d-flex align-items-center gap-2">
-                  <i className="bi bi-eye" /> Detalle del turno
-                </h5>
-                <button type="button" className="btn-close" onClick={cerrarDetalleTurno} aria-label="Cerrar" />
-              </div>
-              <div className="modal-body py-4 text-start">
-                <div className="row g-3">
-                  <div className="col-12 col-md-6">
-                    <div className="border rounded-3 p-3 h-100">
-                      <h6 className="fw-semibold mb-3">Datos del turno</h6>
-                      <div className="mb-2"><span className="text-muted">Fecha:</span> <span className="fw-semibold">{turnoDetalle.fecha}</span></div>
-                      <div className="mb-2"><span className="text-muted">Hora:</span> <span className="fw-semibold">{turnoDetalle.hora}</span></div>
-                      <div className="mb-2"><span className="text-muted">Estado:</span> <span className={`badge ms-2 ${getEstadoBadgeClass(turnoDetalle.estado)}`}>{turnoDetalle.estado}</span></div>
-                      <div className="mb-2"><span className="text-muted">Doctor:</span> <span className="fw-semibold">Dr. {turnoDetalle.doctor?.nombre} {turnoDetalle.doctor?.apellido}</span></div>
-                      <div className="mb-2"><span className="text-muted">Especialidad:</span> <span className="fw-semibold">{turnoDetalle.doctor?.especialidad?.nombre || doctor?.especialidad?.nombre || 'Sin especialidad'}</span></div>
-                    </div>
-                  </div>
-                  <div className="col-12 col-md-6">
-                    <div className="border rounded-3 p-3 h-100">
-                      <h6 className="fw-semibold mb-3">Datos del paciente</h6>
-                      <div className="mb-2"><span className="text-muted">Nombre:</span> <span className="fw-semibold">{turnoDetalle.paciente?.nombre} {turnoDetalle.paciente?.apellido}</span></div>
-                      <div className="mb-2"><span className="text-muted">DNI:</span> <span className="fw-semibold">{turnoDetalle.paciente?.dni}</span></div>
-                      <div className="mb-2"><span className="text-muted">Email:</span> <span className="fw-semibold">{turnoDetalle.paciente?.email || '-'}</span></div>
-                      <div className="mb-2"><span className="text-muted">Teléfono:</span> <span className="fw-semibold">{turnoDetalle.paciente?.telefono || '-'}</span></div>
-                    </div>
-                  </div>
-                  <div className="col-12">
-                    <div className="border rounded-3 p-3">
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h6 className="fw-semibold mb-0">Observaciones</h6>
-                        <button type="button" className="btn btn-sm btn-outline-info" onClick={() => { cerrarDetalleTurno(); iniciarEdicionObservacion(turnoDetalle) }}>
-                          <i className="bi bi-pencil-square me-1" /> Editar observación
-                        </button>
-                      </div>
-                      <p className="mb-0 text-muted">{turnoDetalle.observaciones || 'Sin observaciones registradas.'}</p>
-                    </div>
-                  </div>
-                  <div className="col-12">
-                    <div className="border rounded-3 p-3">
-                      <h6 className="fw-semibold mb-3">Archivos adjuntos</h6>
-                      {Array.isArray(turnoDetalle.archivos) && turnoDetalle.archivos.length > 0 ? (
-                        <div className="list-group list-group-flush">
-                          {turnoDetalle.archivos.map((archivo) => (
-                            <div key={archivo._id || archivo.url || archivo.nombre} className="list-group-item px-0 d-flex justify-content-between align-items-center">
-                              <div>
-                                <div className="fw-semibold">{archivo.nombre || archivo.titulo || 'Archivo'}</div>
-                                <div className="small text-muted">{archivo.tipo || 'Adjunto del turno'}</div>
-                              </div>
-                              {archivo.url && (
-                                <a className="btn btn-sm btn-outline-primary" href={archivo.url} target="_blank" rel="noreferrer">
-                                  <i className="bi bi-box-arrow-up-right me-1" /> Abrir
-                                </a>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-muted">No hay archivos adjuntos.</div>
-                      )}
-
-                      <hr className="my-3" />
-
-                      <h6 className="fw-semibold mb-3">Subir nuevo archivo</h6>
-                      <div className="row g-2 align-items-end">
-                        <div className="col-12 col-md-3">
-                          <label className="form-label small text-muted mb-1">Tipo</label>
-                          <select className="form-select" value={archivoTipo} onChange={(e) => setArchivoTipo(e.target.value)}>
-                            <option value="medico">Médico</option>
-                            <option value="pago">Pago</option>
-                          </select>
-                        </div>
-                        <div className="col-12 col-md-4">
-                          <label className="form-label small text-muted mb-1">Archivo</label>
-                          <input key={fileInputKey} className="form-control" type="file" onChange={handleArchivoSeleccionado} />
-                        </div>
-                        <div className="col-12 col-md-3">
-                          <label className="form-label small text-muted mb-1">Nombre</label>
-                          <input className="form-control" type="text" value={archivoNombre} onChange={(e) => setArchivoNombre(e.target.value)} placeholder="Nombre descriptivo" />
-                        </div>
-                        <div className="col-12 col-md-2 d-grid">
-                          <button type="button" className="btn btn-primary" onClick={subirArchivoEnDetalle} disabled={subiendoArchivo}>
-                            {subiendoArchivo ? 'Subiendo...' : 'Subir'}
-                          </button>
-                        </div>
-                        {subiendoArchivo && (
-                          <div className="col-12">
-                            <div className="progress" role="progressbar" aria-label="Progreso de subida" aria-valuemin="0" aria-valuemax="100" aria-valuenow={archivoProgress}>
-                              <div className="progress-bar" style={{ width: `${archivoProgress}%` }}>{archivoProgress}%</div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer border-0 pb-4 pt-0 d-flex justify-content-end gap-2">
-                {turnoDetalle.estado !== 'realizado' && (
-                  <button type="button" className="btn btn-outline-success" onClick={() => { const current = turnoDetalle; cerrarDetalleTurno(); confirmarRealizarTurno(current) }}>
-                    <i className="bi bi-check-circle me-1" /> Marcar realizado
-                  </button>
-                )}
-                {turnoDetalle.estado !== 'cancelado' && (
-                  <button type="button" className="btn btn-outline-danger" onClick={() => { const current = turnoDetalle; cerrarDetalleTurno(); confirmarCancelarTurno(current) }}>
-                    <i className="bi bi-x-circle me-1" /> Cancelar turno
-                  </button>
-                )}
-                <button type="button" className="btn btn-secondary" onClick={cerrarDetalleTurno}>
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <TurnoDetalleModal
+          open={Boolean(turnoDetalle)}
+          turno={turnoDetalle}
+          variant="doctor"
+          onClose={cerrarDetalleTurno}
+          onEditObservacion={() => { cerrarDetalleTurno(); iniciarEdicionObservacion(turnoDetalle) }}
+          onUploadArchivo={subirArchivoEnDetalle}
+          archivoNombre={archivoNombre}
+          onArchivoNombreChange={setArchivoNombre}
+          onArchivoSeleccionado={handleArchivoSeleccionado}
+          archivoFile={archivoFile}
+          subiendoArchivo={subiendoArchivo}
+          archivoProgress={archivoProgress}
+          fileInputKey={fileInputKey}
+          onDeleteArchivo={eliminarArchivoDetalle}
+          onMarkRealizado={() => { const current = turnoDetalle; cerrarDetalleTurno(); confirmarRealizarTurno(current) }}
+          onCancelTurno={() => { const current = turnoDetalle; cerrarDetalleTurno(); confirmarCancelarTurno(current) }}
+        />
       )}
     </div>
   )
