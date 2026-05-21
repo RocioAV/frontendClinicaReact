@@ -23,6 +23,8 @@ import SolicitarDniGooglePage from './pages/SolicitarDniGooglePage'
 
 const AuthContext = createContext(null)
 const ToastContext = createContext(null)
+import Header from './components/Header'
+import Footer from './components/Footer'
 
 function normalizeRole(role) {
   return String(role || '').trim().toLowerCase()
@@ -233,166 +235,16 @@ function shouldShowFooter(pathname) {
   return publicRoutes.some((route) => (route === '/' ? pathname === '/' : pathname.startsWith(route)))
 }
 
-function Header() {
-  const { profile, isAuthenticated, logout } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-
-  const handleLogout = async () => {
-    await logout()
-    navigate('/')
-  }
-
-  const roleLabel = profile?._rol ? String(profile._rol) : 'Invitado'
-
-  const panelPath = profile?._rol?.toLowerCase() === 'doctor'
-    ? `/doctor/${profile?._id}`
-    : profile?._rol?.toLowerCase() === 'admin'
-      ? '/admin'
-      : `/paciente/${profile?._id}`
-
-  return (
-    <header className="app-header sticky-top bg-white border-bottom shadow-sm">
-      <div className="top-strip d-none d-xl-flex justify-content-between align-items-center px-4 py-2 bg-dark text-light small">
-        <span>📞 (0388) 423-4567</span>
-        <span>📱 (0388) 15-555-6666</span>
-        <div className="d-flex align-items-center gap-3">
-          <a className="text-light text-decoration-none" href="https://wa.me/5493885556666" target="_blank" rel="noreferrer">
-            <i className="bi bi-whatsapp me-1" /> WhatsApp
-          </a>
-          <button className="btn btn-sm btn-outline-light" type="button">Emergencia</button>
-        </div>
-      </div>
-
-      <nav className="navbar navbar-expand-lg navbar-light px-3 px-md-4 py-2">
-        <div className="container-fluid px-0">
-          <button className="navbar-brand brand-link btn btn-link text-decoration-none p-0 d-flex align-items-center" onClick={() => navigate('/')} type="button">
-            <span className="brand-mark me-2 d-none d-md-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold">CL</span>
-            <span>
-              <span className="brand-text fw-bold d-block">CONSULTORIOS LAVALLE</span>
-              <small className="text-muted d-none d-md-block">Tu salud, nuestra prioridad</small>
-            </span>
-          </button>
-
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Alternar navegación">
-            <span className="navbar-toggler-icon" />
-          </button>
-
-          <div id="mainNav" className="collapse navbar-collapse">
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0 gap-lg-2 align-items-lg-center">
-              <li className="nav-item"><NavLink className={({ isActive }) => `nav-link nav-pill ${isActive ? 'active fw-semibold' : ''}`} to="/">Inicio</NavLink></li>
-              <li className="nav-item"><NavLink className={({ isActive }) => `nav-link nav-pill ${isActive ? 'active fw-semibold' : ''}`} to="/especialidades">Especialidades</NavLink></li>
-              <li className="nav-item"><NavLink className={({ isActive }) => `nav-link nav-pill ${isActive ? 'active fw-semibold' : ''}`} to="/doctores">Profesionales</NavLink></li>
-              <li className="nav-item"><NavLink className={({ isActive }) => `nav-link nav-pill ${isActive ? 'active fw-semibold' : ''}`} to="/login">Agendar Turno</NavLink></li>
-              {isAuthenticated && (
-                <li className="nav-item"><NavLink className={({ isActive }) => `nav-link nav-pill ${isActive ? 'active fw-semibold' : ''}`} to={panelPath}>Mi panel</NavLink></li>
-              )}
-            </ul>
-
-            <div className="d-flex align-items-center gap-3">
-              {isAuthenticated && profile ? (
-                <div className="dropdown d-none d-lg-block">
-                  <button className="btn btn-outline-primary dropdown-toggle d-flex align-items-center gap-2 rounded-pill" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i className="bi bi-person-circle" />
-                    <span className="text-truncate" style={{ maxWidth: '180px' }}>{profile.nombre} {profile.apellido}</span>
-                  </button>
-                  <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4 p-2">
-                    <li>
-                      <h6 className="dropdown-header px-3 pt-2 pb-1 mb-0">
-                        {profile.nombre} {profile.apellido}
-                      </h6>
-                    </li>
-                    <li><span className="dropdown-item-text text-muted small px-3">{roleLabel}</span></li>
-                    <li><hr className="dropdown-divider my-2" /></li>
-                    <li><NavLink className="dropdown-item rounded-3" to={panelPath}><i className="bi bi-speedometer2 me-2" />Mi panel</NavLink></li>
-                    {profile?._rol?.toLowerCase() === 'admin' && <li><NavLink className="dropdown-item rounded-3" to="/estadisticas"><i className="bi bi-graph-up me-2" />Estadísticas</NavLink></li>}
-                    <li><button className="dropdown-item rounded-3 text-danger" type="button" onClick={handleLogout}><i className="bi bi-box-arrow-right me-2" />Cerrar sesión</button></li>
-                  </ul>
-                </div>
-              ) : (
-                <button className="btn btn-primary rounded-pill px-4" type="button" onClick={() => navigate('/login')}>
-                  <i className="bi bi-box-arrow-in-right me-2" />Ingresar
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {location.pathname === '/' && (
-        <div className="d-none d-md-block border-top bg-primary-subtle text-primary-emphasis px-3 py-2 text-center small">
-          Tu salud, organizada en un solo lugar
-        </div>
-      )}
-    </header>
-  )
-}
-
-function Footer() {
-  return (
-    <footer className="app-footer mt-auto bg-dark text-white">
-      <div className="container py-4 py-md-5">
-        <div className="row g-4 align-items-center d-none d-md-flex">
-          <div className="col-md-4">
-            <div className="d-flex align-items-center gap-3">
-              <div className="footer-mark rounded-circle bg-white text-dark d-flex align-items-center justify-content-center fw-bold">CL</div>
-              <div>
-                <h6 className="mb-0 fw-bold">CONSULTORIOS LAVALLE</h6>
-                <small className="text-white-50">Tu salud, nuestra prioridad</small>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-4 text-center">
-            <div className="d-flex justify-content-center gap-4 flex-wrap">
-              <NavLink to="/doctores" className="footer-link small">Profesionales</NavLink>
-              <NavLink to="/especialidades" className="footer-link small">Especialidades</NavLink>
-              <NavLink to="/login" className="footer-link small">Turnos</NavLink>
-            </div>
-          </div>
-          <div className="col-md-4 text-end">
-            <div className="d-flex flex-column align-items-end gap-1">
-              <a href="tel:+5493884234567" className="footer-link small"><i className="bi bi-telephone me-1" /> (0388) 423-4567</a>
-              <a href="mailto:info@consultorioslavalle.com" className="footer-link small"><i className="bi bi-envelope me-1" /> Contacto</a>
-            </div>
-          </div>
-        </div>
-
-        <div className="d-md-none text-center">
-          <div className="d-flex align-items-center justify-content-center gap-2 mb-3">
-            <div className="footer-mark rounded-circle bg-white text-dark d-flex align-items-center justify-content-center fw-bold">CL</div>
-            <div>
-              <h6 className="mb-0 fw-bold">CONSULTORIOS LAVALLE</h6>
-              <small className="text-white-50">Tu salud, nuestra prioridad</small>
-            </div>
-          </div>
-          <div className="d-flex justify-content-center gap-3 mb-3 flex-wrap">
-            <NavLink to="/doctores" className="footer-link small">Profesionales</NavLink>
-            <NavLink to="/especialidades" className="footer-link small">Especialidades</NavLink>
-            <NavLink to="/login" className="footer-link small">Turnos</NavLink>
-          </div>
-          <div className="d-flex justify-content-center gap-3 flex-wrap small">
-            <a href="tel:+5493884234567" className="footer-link"><i className="bi bi-telephone me-1" /> Llamar</a>
-            <a href="mailto:info@consultorioslavalle.com" className="footer-link"><i className="bi bi-envelope me-1" /> Contacto</a>
-          </div>
-        </div>
-
-        <hr className="border-white border-opacity-25 my-4" />
-
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small text-white-50">
-          <span>© 2025 Consultorios Lavalle. Todos los derechos reservados.</span>
-          <span>Desarrollado por Equipo Dev Grupo 03</span>
-        </div>
-      </div>
-    </footer>
-  )
-}
+/* Footer component moved to src/components/Footer.jsx */
 
 function Layout() {
   const location = useLocation()
 
+  const auth = useAuth()
+
   return (
     <div className="app-shell d-flex flex-column min-vh-100">
-      <Header />
+      <Header profile={auth.profile} isAuthenticated={auth.isAuthenticated} logout={auth.logout} />
       <main className="app-main flex-grow-1 w-100">
         <Outlet />
       </main>
@@ -847,38 +699,44 @@ function SolicitudDniGooglePage() {
 
 function HomePage() {
   const navigate = useNavigate()
-
   return (
     <div>
-      <section className="hero-section py-5 py-lg-6 text-white">
+      <section className="hero-section py-5 py-lg-6">
         <div className="container py-4 py-lg-5">
           <div className="row align-items-center g-5">
             <div className="col-lg-6">
-              <span className="badge text-bg-light text-primary mb-3">Portal de salud digital</span>
-              <h1 className="display-4 fw-bold">Tu bienestar, nuestra prioridad</h1>
-              <p className="lead opacity-75">Reserva turnos, consulta doctores, gestiona pagos y revisa tus archivos médicos desde una sola plataforma.</p>
-              <div className="input-group input-group-lg mt-4 shadow-sm">
-                <input className="form-control" placeholder="Buscar profesionales, especialidades o turnos" />
-                <button className="btn btn-warning" type="button"><i className="bi bi-search me-2" />Buscar</button>
+              <span className="badge bg-light text-primary mb-3">Portal de salud digital</span>
+              <h1 className="display-4 fw-bold text-dark">Tu bienestar, nuestra prioridad</h1>
+              <p className="lead text-muted mb-4">Reserva turnos, consulta doctores, gestiona pagos y revisa tu historial clínico y resultados desde una sola plataforma.</p>
+              <div className="input-group input-group-lg mt-3 shadow-sm rounded overflow-hidden">
+                <input className="form-control border-0" placeholder="Buscar profesionales, especialidades o turnos" />
+                <button className="btn btn-primary" type="button"><i className="bi bi-search me-2" />Buscar</button>
+              </div>
+
+              <div className="d-flex gap-3 mt-4">
+                <button className="btn btn-lg btn-primary btn-custom" type="button" onClick={() => navigate('/doctores')}><i className="bi bi-calendar-check-fill me-2" />Agendar Turno</button>
+                <button className="btn btn-lg btn-outline-secondary" type="button" onClick={() => navigate('/login')}><i className="bi bi-box-arrow-in-right me-2" />Ingresar</button>
               </div>
             </div>
+
             <div className="col-lg-6">
-              <div className="hero-card card border-0 shadow-lg">
+              <div className="hero-card card border-0 shadow-lg bg-white h-100">
                 <div className="card-body p-4 p-md-5">
-                  <h2 className="h4 fw-bold mb-3 text-dark">Acceso rápido</h2>
+                  <h2 className="h5 fw-bold mb-3 text-dark">Accesos rápidos</h2>
                   <div className="row g-3">
                     {[
-                      { icon: 'bi-calendar-check-fill', title: 'Turnos online', text: 'Agenda tu cita con un profesional.', action: () => navigate('/login') },
-                      { icon: 'bi-search', title: 'Busca tu doctor', text: 'Explora especialidades y perfiles.', action: () => navigate('/doctores') },
-                      { icon: 'bi-credit-card-fill', title: 'Abona consultas', text: 'Flujo de pago listo para integrarse.', action: () => navigate('/login') },
+                      { icon: 'bi-search', title: 'Buscar profesionales', text: 'Explora perfiles y especialidades.', action: () => navigate('/doctores') },
+
                       { icon: 'bi-geo-alt-fill', title: 'Cómo llegar', text: 'Ubicación y contacto del consultorio.', action: () => document.getElementById('location-section')?.scrollIntoView({ behavior: 'smooth' }) },
                     ].map((card) => (
                       <div className="col-12 col-md-6" key={card.title}>
-                        <button type="button" className="service-tile btn btn-light w-100 text-start p-3 h-100" onClick={card.action}>
-                          <i className={`bi ${card.icon} fs-2 text-primary`} />
-                          <div className="mt-3">
-                            <div className="fw-semibold">{card.title}</div>
-                            <div className="text-secondary small">{card.text}</div>
+                        <button type="button" className="btn btn-light w-100 text-start p-3 h-100 shadow-sm rounded-3" onClick={card.action}>
+                          <div className="d-flex align-items-start gap-3">
+                            <div className="bg-primary bg-opacity-10 text-primary rounded-circle p-2"><i className={`bi ${card.icon} fs-4`} /></div>
+                            <div>
+                              <div className="fw-semibold">{card.title}</div>
+                              <div className="text-secondary small">{card.text}</div>
+                            </div>
                           </div>
                         </button>
                       </div>
@@ -898,13 +756,12 @@ function HomePage() {
               <h2 className="fw-bold text-primary mb-3">Tu salud, tu información al alcance</h2>
               <p className="text-secondary">Desde agendar citas hasta consultar tu historial clínico y resultados, la experiencia se mantiene centrada en el paciente.</p>
               <div className="d-grid gap-3 mt-4">
-                <button className="btn btn-outline-primary text-start" type="button" onClick={() => navigate('/login')}><i className="bi bi-person-circle me-2" />Ingresar al portal del paciente</button>
                 <button className="btn btn-outline-secondary text-start" type="button" onClick={() => navigate('/especialidades')}><i className="bi bi-hospital me-2" />Ver especialidades</button>
                 <a className="btn btn-outline-info text-start" href="mailto:soporte@consultorioslavalle.com"><i className="bi bi-chat-dots me-2" />Contactar soporte</a>
               </div>
             </div>
             <div className="col-lg-6 text-center">
-              <img className="img-fluid rounded-4 shadow" alt="Portal del paciente" src="https://www.diagnosticointegralmedico.com.ar/wp-content/uploads/2023/05/Publicacion_2_PortadaRetrato-820x1024.png" />
+              <img className="img-fluid rounded-4 shadow" alt="Portal del paciente" src="/portal.jpg" />
             </div>
           </div>
         </div>
@@ -943,9 +800,21 @@ function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  const dniError = dni && !/^[0-9]{7,8}$/.test(dni) ? 'El DNI debe tener 7 u 8 dígitos' : ''
+  const passwordError = password && password.length < 6 ? 'La contraseña debe tener al menos 6 caracteres' : ''
+  const canSubmit = /^[0-9]{7,8}$/.test(dni) && password.length >= 6
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setSubmitted(true)
+
+    if (!canSubmit) {
+      pushToast({ variant: 'warning', title: 'Validación', message: 'Revisá los datos del login.' })
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -1007,9 +876,9 @@ function LoginPage() {
   }
 
   return (
-    <section className="login-page py-5">
+    <section className="auth-page py-5">
       <div className="container d-flex justify-content-center">
-        <div className="card border-0 shadow-lg login-card w-100">
+        <div className="card border-0 shadow-lg auth-card auth-card--sm w-100">
           <div className="card-body p-4 p-md-5">
             <div className="text-center mb-4">
               <h1 className="h3 fw-bold text-primary">Iniciar Sesión</h1>
@@ -1022,7 +891,7 @@ function LoginPage() {
                 <div className="input-group">
                   <span className="input-group-text"><i className="bi bi-person-vcard" /></span>
                   <input
-                    className="form-control"
+                    className={`form-control ${dniError ? 'is-invalid' : ''}`}
                     value={dni}
                     onChange={(event) => setDni(event.target.value.replace(/\D/g, '').slice(0, 8))}
                     placeholder="Ingrese su DNI"
@@ -1031,6 +900,7 @@ function LoginPage() {
                     required
                   />
                 </div>
+                {dniError && <div className="invalid-feedback d-block">{dniError}</div>}
               </div>
 
               <div>
@@ -1038,7 +908,7 @@ function LoginPage() {
                 <div className="input-group">
                   <span className="input-group-text"><i className="bi bi-lock" /></span>
                   <input
-                    className="form-control"
+                    className={`form-control ${passwordError ? 'is-invalid' : ''}`}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
@@ -1050,9 +920,10 @@ function LoginPage() {
                     <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} />
                   </button>
                 </div>
+                {passwordError && <div className="invalid-feedback d-block">{passwordError}</div>}
               </div>
 
-              <button className="btn btn-primary btn-lg" type="submit" disabled={loading}>{loading ? 'Iniciando...' : 'Iniciar Sesión'}</button>
+              <button className="btn btn-primary btn-lg" type="submit" disabled={loading || !canSubmit}>{loading ? 'Iniciando...' : 'Iniciar Sesión'}</button>
               <button className="btn btn-outline-secondary btn-lg" type="button" onClick={handleGoogleLogin} disabled={loading}><i className="bi bi-google text-danger me-2" />Continuar con Google</button>
               <button className="btn btn-link text-decoration-none" type="button" onClick={() => navigate('/login/registro-paciente')}>Crear cuenta nueva</button>
               <button className="btn btn-link text-decoration-none" type="button" onClick={() => navigate('/resetear-password')}>¿Olvidaste tu contraseña?</button>

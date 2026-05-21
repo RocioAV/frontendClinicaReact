@@ -106,17 +106,7 @@ export default function DoctorProfilePage() {
                 </div>
               </div>
 
-              <div className="mb-4">
-                <label className="form-label fw-semibold">Observaciones para el turno</label>
-                <textarea
-                  className="form-control"
-                  rows={4}
-                  value={observaciones}
-                  onChange={(e) => setObservaciones(e.target.value)}
-                  placeholder="Escribí aquí lo que quieras informar antes de reservar"
-                />
-                <div className="form-text">Estas observaciones se enviarán al turno al continuar con la reserva.</div>
-              </div>
+              
 
               <div className="d-grid d-md-flex gap-2">
                 <button className="btn btn-primary btn-lg" type="button" onClick={handleReservar}>

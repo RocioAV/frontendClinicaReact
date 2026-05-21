@@ -98,9 +98,12 @@ export default function EspecialidadesPage() {
                     <div className="mt-4 pt-3 border-top">
                       <div className="d-flex justify-content-between align-items-center">
                         <small className="text-muted"><i className="bi bi-clock me-1" />Horarios de atención disponibles</small>
-                        <button className="btn btn-primary" type="button" onClick={() => navigate('/login')} title={`Reservar turno en ${especialidad.nombre}`}>
-                          <i className="bi bi-calendar-plus me-2" />Reservar Turno
-                        </button>
+                        <div className="d-flex gap-2">
+                          <button className="btn btn-outline-primary" type="button" onClick={() => navigate('/doctores')} title={`Ver profesionales en ${especialidad.nombre}`}>
+                            <i className="bi bi-eye me-2" />Ver profesionales
+                          </button>
+                          
+                        </div>
                       </div>
                     </div>
                   </div>

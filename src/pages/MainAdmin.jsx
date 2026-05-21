@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useToast } from '../App'
 import { getPacienteByDni } from '../services/pacienteService'
 import { desactivarDoctor, getDoctores } from '../services/doctorService'
+import { getEspecialidades } from '../services/especialidadService'
 import { confirmarTurno, getAllTurnos, getTurnosByFecha, getTurnosByPaciente, getTurnosPendientes } from '../services/turnoService'
 import { request } from '../services/api'
 
@@ -17,6 +18,8 @@ export default function MainAdmin() {
   const [turnosFiltrados, setTurnosFiltrados] = useState([])
   const [pacientes, setPacientes] = useState([])
   const [doctores, setDoctores] = useState([])
+  const [especialidades, setEspecialidades] = useState([])
+  const [filtroEspecialidad, setFiltroEspecialidad] = useState('')
   const [loading, setLoading] = useState(true)
   const [doctorAEliminar, setDoctorAEliminar] = useState(null)
   const [showEliminarDoctorModal, setShowEliminarDoctorModal] = useState(false)
@@ -24,15 +27,18 @@ export default function MainAdmin() {
   const loadAll = async () => {
     setLoading(true)
     try {
-      const [turnosPendientes, turnosTodos, doctoresData] = await Promise.all([
+      const [turnosPendientes, turnosTodos, doctoresData, pacientesData, especialidadesData] = await Promise.all([
         getTurnosPendientes(),
         getAllTurnos(),
         getDoctores(),
         request('/pacientes'),
+        getEspecialidades(),
       ])
       setTurnos(Array.isArray(turnosPendientes) ? turnosPendientes : [])
       setTurnosFiltrados(Array.isArray(turnosTodos) ? turnosTodos : [])
       setDoctores(Array.isArray(doctoresData) ? doctoresData : [])
+      setPacientes(Array.isArray(pacientesData) ? pacientesData : [])
+      setEspecialidades(Array.isArray(especialidadesData) ? especialidadesData : [])
     } catch (error) {
       pushToast({ variant: 'danger', title: 'Error', message: 'No se pudieron cargar los datos administrativos' })
     } finally {
@@ -119,6 +125,7 @@ export default function MainAdmin() {
   const limpiarFiltros = () => {
     setFiltroFecha('')
     setFiltroDni('')
+    setFiltroEspecialidad('')
     loadAll()
   }
 
@@ -150,6 +157,25 @@ export default function MainAdmin() {
     { label: 'Doctores', value: doctores.length, icon: 'bi-person-badge', color: 'info' },
     { label: 'Turnos totales', value: turnosFiltrados.length, icon: 'bi-list-check', color: 'warning' },
   ]), [turnos.length, pacientes.length, doctores.length, turnosFiltrados.length])
+
+  const doctoresFiltrados = useMemo(() => {
+    if (!filtroEspecialidad) return doctores
+    return doctores.filter((d) => (d.especialidad?._id || d.especialidad) === filtroEspecialidad)
+  }, [doctores, filtroEspecialidad])
+
+  const buscarPacientePorDni = async () => {
+    if (!filtroDni) {
+      await loadAll()
+      return
+    }
+    try {
+      const paciente = await getPacienteByDni(filtroDni)
+      setPacientes(paciente?._id ? [paciente] : [])
+    } catch (err) {
+      pushToast({ variant: 'danger', title: 'Error', message: 'Error al buscar paciente por DNI' })
+      setPacientes([])
+    }
+  }
 
   return (
     <div className="container-fluid main-admin-container">
@@ -274,6 +300,13 @@ export default function MainAdmin() {
           {section === 'pacientes' && (
             <>
               <h3 className="mb-4 fw-bold text-primary">Pacientes</h3>
+              <div className="mb-3">
+                <form className="row g-2" onSubmit={(e) => e.preventDefault()}>
+                  <div className="col-12 col-md-6"><input type="text" className="form-control" placeholder="Buscar paciente por DNI" value={filtroDni} onChange={(e) => setFiltroDni(e.target.value)} /></div>
+                  <div className="col-12 col-md-6 d-flex gap-2"><button type="button" className="btn btn-outline-primary flex-fill" onClick={buscarPacientePorDni}><i className="bi bi-search d-md-none" /><span className="d-none d-md-inline">Buscar</span></button><button type="button" className="btn btn-outline-secondary flex-fill" onClick={() => { setFiltroDni(''); loadAll() }}><i className="bi bi-x-circle d-md-none" /><span className="d-none d-md-inline">Limpiar</span></button></div>
+                </form>
+              </div>
+
               <div className="row g-3">
                 {pacientes.length === 0 ? <div className="col-12"><div className="alert alert-light text-center">Sin pacientes cargados.</div></div> : pacientes.map((paciente) => (
                   <div className="col-12 col-md-6 col-xl-4" key={paciente._id}>
@@ -299,8 +332,20 @@ export default function MainAdmin() {
           {section === 'doctores' && (
             <>
               <h3 className="mb-4 fw-bold text-primary">Doctores</h3>
+              <div className="mb-3">
+                <form className="row g-2" onSubmit={(e) => e.preventDefault()}>
+                  <div className="col-12 col-md-6">
+                    <select className="form-select" value={filtroEspecialidad} onChange={(e) => setFiltroEspecialidad(e.target.value)}>
+                      <option value="">Todas las especialidades</option>
+                      {especialidades.map((esp) => (<option key={esp._id} value={esp._id}>{esp.nombre}</option>))}
+                    </select>
+                  </div>
+                  <div className="col-12 col-md-6 d-flex gap-2"><button type="button" className="btn btn-outline-secondary" onClick={() => setFiltroEspecialidad('')}>Limpiar</button></div>
+                </form>
+              </div>
+
               <div className="row g-3">
-                {doctores.length === 0 ? <div className="col-12"><div className="alert alert-light text-center">Sin doctores cargados.</div></div> : doctores.map((doctor) => (
+                {doctoresFiltrados.length === 0 ? <div className="col-12"><div className="alert alert-light text-center">Sin doctores cargados.</div></div> : doctoresFiltrados.map((doctor) => (
                   <div className="col-12 col-md-6 col-xl-4" key={doctor._id}>
                     <div className="card h-100 shadow-sm border-0">
                       <div className="card-body text-start d-flex flex-column">

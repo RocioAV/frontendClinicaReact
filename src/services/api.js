@@ -1,5 +1,20 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL
 
+function extractErrorMessage(payload) {
+  if (!payload) return 'Error de red'
+  if (typeof payload === 'string') return payload
+  if (Array.isArray(payload)) {
+    return payload
+      .map((item) => extractErrorMessage(item))
+      .filter(Boolean)
+      .join(', ')
+  }
+  if (typeof payload === 'object') {
+    return payload.message || payload.msg || payload.error || JSON.stringify(payload)
+  }
+  return String(payload)
+}
+
 async function request(path, options = {}) {
   const storedToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null
   const authToken = options.token || storedToken
@@ -19,7 +34,7 @@ async function request(path, options = {}) {
   const payload = hasJson ? await response.json() : await response.text()
 
   if (!response.ok) {
-    const message = payload?.message || payload?.error || payload || 'Error de red'
+    const message = extractErrorMessage(payload)
     throw new Error(message)
   }
 

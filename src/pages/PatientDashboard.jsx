@@ -385,15 +385,7 @@ export default function PatientDashboard() {
             <hr className="my-2" />
             <div className="d-flex flex-column gap-2">
               <button className="btn btn-outline-primary d-flex align-items-center gap-2 w-100" onClick={abrirModalEditarPerfil} type="button"><i className="bi bi-pencil-square" /> Editar perfil</button>
-              {paciente?.uid_firebase ? (
-                <div className="alert alert-warning mb-0 py-2 text-start">
-                  <small className="d-block fw-semibold mb-1">Cuenta vinculada con Google</small>
-                  <small className="text-muted d-block">Desvinculala para cambiar tu contraseña.</small>
-                </div>
-              ) : (
-                <button className="btn btn-outline-secondary d-flex align-items-center gap-2 w-100" onClick={onForgotPassword} type="button"><i className="bi bi-key" /> Cambiar contraseña</button>
-              )}
-              <button className="btn btn-outline-danger d-flex align-items-center gap-2 w-100" onClick={onLogout} type="button"><i className="bi bi-box-arrow-right" /> Cerrar sesión</button>
+              
             </div>
           </div>
         </div>

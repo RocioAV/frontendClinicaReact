@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import { es } from 'date-fns/locale/es'
 import { useToast } from '../App'
 import { request } from '../services/api'
 import { createTurno, getTurnosByDoctorFecha, getTurnosByPaciente } from '../services/turnoService'
 import { createPreference } from '../services/pagoService'
 import { getDoctorById } from '../services/doctorService'
+import 'react-datepicker/dist/react-datepicker.css'
 
-const weekDays = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 const startHour = 13
 const endHour = 20
 
-function pad(value) {
-  return String(value).padStart(2, '0')
-}
+registerLocale('es', es)
 
 function toDisplayDate(date) {
   return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
@@ -20,25 +20,6 @@ function toDisplayDate(date) {
 
 function sameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
-
-function addMonths(date, amount) {
-  const next = new Date(date)
-  next.setMonth(next.getMonth() + amount)
-  return next
-}
-
-function buildCalendarDays(baseDate) {
-  const first = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1)
-  const startOffset = first.getDay()
-  const gridStart = new Date(first)
-  gridStart.setDate(first.getDate() - startOffset)
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const current = new Date(gridStart)
-    current.setDate(gridStart.getDate() + index)
-    return current
-  })
 }
 
 export default function TurnoReserva({ idPaciente: propPacienteId, idDoctor: propDoctorId, onSuccess }) {
@@ -57,10 +38,8 @@ export default function TurnoReserva({ idPaciente: propPacienteId, idDoctor: pro
   const [selectedDate, setSelectedDate] = useState(null)
   const [selectedHour, setSelectedHour] = useState(null)
   const [observaciones, setObservaciones] = useState(location.state?.observaciones || '')
-  const [viewDate, setViewDate] = useState(new Date())
 
   const horas = useMemo(() => Array.from({ length: endHour - startHour + 1 }, (_, index) => `${startHour + index}:00`), [])
-  const calendarDays = useMemo(() => buildCalendarDays(viewDate), [viewDate])
 
   useEffect(() => {
     let active = true
@@ -113,7 +92,8 @@ export default function TurnoReserva({ idPaciente: propPacienteId, idDoctor: pro
   }, [idDoctor, pushToast, selectedDate])
 
   const today = new Date()
-  const maxDate = addMonths(today, 2)
+  const maxDate = new Date(today)
+  maxDate.setMonth(maxDate.getMonth() + 2)
 
   const isDisabled = (date) => {
     const isBeforeToday = date < new Date(today.getFullYear(), today.getMonth(), today.getDate())
@@ -138,7 +118,7 @@ export default function TurnoReserva({ idPaciente: propPacienteId, idDoctor: pro
   }
 
   const onDateSelect = (date) => {
-    if (isDisabled(date)) return
+    if (!date || isDisabled(date)) return
     setSelectedDate(date)
   }
 
@@ -146,6 +126,14 @@ export default function TurnoReserva({ idPaciente: propPacienteId, idDoctor: pro
     if (!selectedDate) return 'Debe seleccionar una fecha'
     if (!selectedHour) return 'Debe seleccionar una hora'
     return null
+  }
+
+  const getNextAvailableDate = (baseDate) => {
+    const next = new Date(baseDate)
+    while (next.getDay() === 0 || next.getDay() === 6) {
+      next.setDate(next.getDate() + 1)
+    }
+    return next
   }
 
   const reservarTurno = async (metodo) => {
@@ -221,7 +209,7 @@ export default function TurnoReserva({ idPaciente: propPacienteId, idDoctor: pro
     }
   }
 
-  const goToTodayMonth = () => setViewDate(new Date())
+  const goToTodayMonth = () => setSelectedDate(getNextAvailableDate(new Date()))
 
   if (loading) {
     return <section className="container py-5"><div className="alert alert-info">Cargando reserva de turno...</div></section>
@@ -255,43 +243,36 @@ export default function TurnoReserva({ idPaciente: propPacienteId, idDoctor: pro
                   </div>
 
                   <div className="calendar-shell border rounded-4 p-3 bg-light">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <button className="btn btn-outline-primary btn-sm" type="button" onClick={() => setViewDate((current) => addMonths(current, -1))} disabled={viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() === today.getMonth()}>
-                        <i className="bi bi-chevron-left" />
-                      </button>
-                      <div className="fw-bold text-primary">
-                        {viewDate.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
-                      </div>
-                      <button className="btn btn-outline-primary btn-sm" type="button" onClick={() => setViewDate((current) => addMonths(current, 1))} disabled={viewDate > maxDate}>
-                        <i className="bi bi-chevron-right" />
-                      </button>
-                    </div>
-
-                    <div className="row g-1 mb-2 text-center small fw-semibold text-muted">
-                      {weekDays.map((day) => <div className="col" key={day}>{day}</div>)}
-                    </div>
-
-                    <div className="row g-1 text-center">
-                      {calendarDays.map((day) => {
-                        const disabled = isDisabled(day)
-                        const selected = selectedDate && sameDay(day, selectedDate)
-                        const outOfMonth = day.getMonth() !== viewDate.getMonth()
-
-                        return (
-                          <div className="col" key={day.toISOString()}>
-                            <button
-                              type="button"
-                              className={`btn w-100 calendar-day ${selected ? 'btn-primary' : 'btn-outline-secondary'} ${disabled ? 'disabled opacity-50' : ''} ${outOfMonth ? 'calendar-day-muted' : ''}`}
-                              onClick={() => onDateSelect(day)}
-                              disabled={disabled}
-                              style={{ minHeight: '44px' }}
-                            >
-                              {day.getDate()}
-                            </button>
+                    <DatePicker
+                      inline
+                      locale="es"
+                      selected={selectedDate}
+                      onChange={onDateSelect}
+                      minDate={today}
+                      maxDate={maxDate}
+                      filterDate={(date) => {
+                        const dayOfWeek = date.getDay()
+                        return dayOfWeek !== 0 && dayOfWeek !== 6
+                      }}
+                      renderCustomHeader={({ date, decreaseMonth, increaseMonth, prevMonthButtonDisabled, nextMonthButtonDisabled }) => (
+                        <div className="d-flex justify-content-between align-items-center mb-3 px-1">
+                          <button className="btn btn-outline-primary btn-sm" type="button" onClick={decreaseMonth} disabled={prevMonthButtonDisabled}>
+                            <i className="bi bi-chevron-left" />
+                          </button>
+                          <div className="fw-bold text-primary text-capitalize">
+                            {date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
                           </div>
-                        )
-                      })}
-                    </div>
+                          <button className="btn btn-outline-primary btn-sm" type="button" onClick={increaseMonth} disabled={nextMonthButtonDisabled}>
+                            <i className="bi bi-chevron-right" />
+                          </button>
+                        </div>
+                      )}
+                      calendarClassName="turno-calendar"
+                      dayClassName={(date) => {
+                        if (selectedDate && sameDay(date, selectedDate)) return 'turno-calendar-day-selected'
+                        return ''
+                      }}
+                    />
                   </div>
                 </div>
 
@@ -335,10 +316,6 @@ export default function TurnoReserva({ idPaciente: propPacienteId, idDoctor: pro
                     <strong>Turno:</strong> {selectedDate.getDate()}/{selectedDate.getMonth() + 1}/{selectedDate.getFullYear()} a las {selectedHour}
                   </div>
 
-                  <div className="mb-3 text-start">
-                    <label className="form-label fw-semibold">Observaciones</label>
-                    <textarea className="form-control" rows={3} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} placeholder="Indicá cualquier detalle relevante" />
-                  </div>
 
                   <h6 className="mb-3">💳 Selecciona tu método de pago</h6>
                   <div className="row g-2 justify-content-center">
