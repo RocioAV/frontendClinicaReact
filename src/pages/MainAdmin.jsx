@@ -4,7 +4,7 @@ import { useToast } from '../App'
 import { getPacienteByDni } from '../services/pacienteService'
 import { desactivarDoctor, getDoctores } from '../services/doctorService'
 import { getEspecialidades } from '../services/especialidadService'
-import { confirmarTurno, getAllTurnos, getTurnosByFecha, getTurnosByPaciente, getTurnosPendientes } from '../services/turnoService'
+import { cancelTurno, confirmarTurno, getAllTurnos, getTurnosByFecha, getTurnosByPaciente, getTurnosPendientes } from '../services/turnoService'
 import { request } from '../services/api'
 
 export default function MainAdmin() {
@@ -23,6 +23,7 @@ export default function MainAdmin() {
   const [loading, setLoading] = useState(true)
   const [doctorAEliminar, setDoctorAEliminar] = useState(null)
   const [showEliminarDoctorModal, setShowEliminarDoctorModal] = useState(false)
+  const [turnoEnAccionId, setTurnoEnAccionId] = useState(null)
 
   const loadAll = async () => {
     setLoading(true)
@@ -54,13 +55,54 @@ export default function MainAdmin() {
   const onClickRegistrarDoctor = () => navigate('/registro-doctor')
   const closeMobileMenu = () => setMobileMenuOpen(false)
 
+  const actualizarTurnoEnEstado = (turnoId, nuevoEstado) => {
+    setTurnos((current) => current.filter((turno) => turno._id !== turnoId))
+    setTurnosFiltrados((current) => current.map((turno) => (
+      turno._id === turnoId ? { ...turno, estado: nuevoEstado } : turno
+    )))
+  }
+
+  const restaurarTurnoEnEstado = (turnoOriginal) => {
+    if (!turnoOriginal?._id) return
+
+    setTurnos((current) => (
+      current.some((turno) => turno._id === turnoOriginal._id)
+        ? current
+        : [turnoOriginal, ...current]
+    ))
+
+    setTurnosFiltrados((current) => current.map((turno) => (
+      turno._id === turnoOriginal._id ? turnoOriginal : turno
+    )))
+  }
+
   const confirmarDoctor = async (turnoId) => {
+    const turnoOriginal = turnos.find((turno) => turno._id === turnoId)
+    setTurnoEnAccionId(turnoId)
+    actualizarTurnoEnEstado(turnoId, 'confirmado')
     try {
       await confirmarTurno(turnoId)
       pushToast({ variant: 'success', title: 'Éxito', message: 'Turno confirmado' })
-      await loadAll()
-    } catch {
-      pushToast({ variant: 'danger', title: 'Error', message: 'No se pudo confirmar el turno' })
+    } catch (error) {
+      restaurarTurnoEnEstado(turnoOriginal)
+      pushToast({ variant: 'danger', title: 'Error', message: error?.message || 'No se pudo confirmar el turno' })
+    } finally {
+      setTurnoEnAccionId(null)
+    }
+  }
+
+  const cancelarTurnoAdmin = async (turnoId) => {
+    const turnoOriginal = turnos.find((turno) => turno._id === turnoId)
+    setTurnoEnAccionId(turnoId)
+    actualizarTurnoEnEstado(turnoId, 'cancelado')
+    try {
+      await cancelTurno(turnoId)
+      pushToast({ variant: 'success', title: 'Éxito', message: 'Turno cancelado' })
+    } catch (error) {
+      restaurarTurnoEnEstado(turnoOriginal)
+      pushToast({ variant: 'danger', title: 'Error', message: error?.message || 'No se pudo cancelar el turno' })
+    } finally {
+      setTurnoEnAccionId(null)
     }
   }
 
@@ -285,7 +327,8 @@ export default function MainAdmin() {
                             <div className="small text-muted mb-2"><i className="bi bi-calendar-event me-2" />{turno.fecha} · {turno.hora}</div>
                             <div className="small text-muted mb-3"><i className="bi bi-receipt me-2" />Pago: {renderArchivoPago(turno)}</div>
                             <div className="mt-auto d-grid gap-2">
-                              <button className="btn btn-primary" type="button" onClick={() => confirmarTurno(turno._id)}><i className="bi bi-check-circle me-2" />Confirmar turno</button>
+                              <button className="btn btn-primary" type="button" onClick={() => confirmarDoctor(turno._id)} disabled={turnoEnAccionId === turno._id}><i className="bi bi-check-circle me-2" />{turnoEnAccionId === turno._id ? 'Procesando...' : 'Confirmar turno'}</button>
+                              <button className="btn btn-outline-danger" type="button" onClick={() => cancelarTurnoAdmin(turno._id)} disabled={turnoEnAccionId === turno._id}><i className="bi bi-x-circle me-2" />{turnoEnAccionId === turno._id ? 'Procesando...' : 'Cancelar turno'}</button>
                             </div>
                           </div>
                         </div>
@@ -372,6 +415,10 @@ export default function MainAdmin() {
                       <div className="col-6"><small className="text-muted">DNI:</small><div className="fw-semibold">{turno.paciente?.dni}</div></div>
                       <div className="col-6"><small className="text-muted">Fecha:</small><div className="fw-semibold">{turno.fecha}</div></div>
                       <div className="col-12 mt-2"><small className="text-muted">Doctor:</small><div className="fw-semibold">{turno.doctor?.nombre} {turno.doctor?.apellido}</div></div>
+                    </div>
+                    <div className="d-grid gap-2 mt-3">
+                      <button className="btn btn-primary btn-sm" type="button" onClick={() => confirmarDoctor(turno._id)} disabled={turnoEnAccionId === turno._id}><i className="bi bi-check-circle me-2" />{turnoEnAccionId === turno._id ? 'Procesando...' : 'Confirmar'}</button>
+                      <button className="btn btn-outline-danger btn-sm" type="button" onClick={() => cancelarTurnoAdmin(turno._id)} disabled={turnoEnAccionId === turno._id}><i className="bi bi-x-circle me-2" />{turnoEnAccionId === turno._id ? 'Procesando...' : 'Cancelar'}</button>
                     </div>
                   </div>
                 </div>
