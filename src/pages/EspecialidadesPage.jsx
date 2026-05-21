@@ -53,8 +53,8 @@ export default function EspecialidadesPage() {
                   <div className="card-body p-4">
                     <div className="d-flex align-items-start mb-3">
                       <div className="flex-shrink-0 me-3">
-                        <div className="bg-primary bg-gradient rounded-circle p-3 text-white">
-                          <i className="bi bi-hospital fs-4" />
+                        <div className="especialidad-icon-badge bg-primary bg-gradient text-white">
+                          <i className="bi bi-hospital" />
                         </div>
                       </div>
                       <div className="flex-grow-1">
@@ -76,8 +76,8 @@ export default function EspecialidadesPage() {
                           <div className="col-md-6" key={doctor._id}>
                             <div className="d-flex align-items-center p-3 bg-light rounded-3 border">
                               <div className="flex-shrink-0 me-3">
-                                <div className="bg-white rounded-circle p-2 shadow-sm">
-                                  <i className="bi bi-person-circle text-primary fs-5" />
+                                <div className="especialidad-doctor-avatar bg-white shadow-sm">
+                                  <i className="bi bi-person-circle text-primary" />
                                 </div>
                               </div>
                               <div className="flex-grow-1 text-start">

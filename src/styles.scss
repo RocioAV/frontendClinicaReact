@@ -263,3 +263,43 @@ body {
   background-color: var(--bs-primary) !important;
   color: #fff !important;
 }
+
+.especialidad-icon-badge,
+.especialidad-doctor-avatar {
+  flex: 0 0 auto;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.especialidad-icon-badge {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: $custom-shadow-sm;
+
+  i {
+    font-size: 1.35rem;
+    line-height: 1;
+    display: block;
+  }
+}
+
+.especialidad-doctor-avatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(79, 70, 229, 0.12);
+
+  i {
+    font-size: 1.25rem;
+    line-height: 1;
+    display: block;
+  }
+}
