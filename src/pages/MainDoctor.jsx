@@ -156,12 +156,6 @@ export default function MainDoctor() {
   const eliminarArchivoDetalle = async (archivo) => {
     if (!archivo?._id || !turnoDetalle?._id) return
 
-    // Seguridad: solo permitir que el doctor elimine archivos médicos
-    if (archivo.tipo !== 'medico') {
-      pushToast({ variant: 'warning', title: 'Acción no permitida', message: 'Solo se pueden eliminar archivos médicos desde esta vista.' })
-      return
-    }
-
     try {
       await eliminarArchivo(archivo._id)
       setTurnoDetalle((current) => ({

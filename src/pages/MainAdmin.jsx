@@ -332,20 +332,8 @@ export default function MainAdmin() {
           {section === 'doctores' && (
             <>
               <h3 className="mb-4 fw-bold text-primary">Doctores</h3>
-              <div className="mb-3">
-                <form className="row g-2" onSubmit={(e) => e.preventDefault()}>
-                  <div className="col-12 col-md-6">
-                    <select className="form-select" value={filtroEspecialidad} onChange={(e) => setFiltroEspecialidad(e.target.value)}>
-                      <option value="">Todas las especialidades</option>
-                      {especialidades.map((esp) => (<option key={esp._id} value={esp._id}>{esp.nombre}</option>))}
-                    </select>
-                  </div>
-                  <div className="col-12 col-md-6 d-flex gap-2"><button type="button" className="btn btn-outline-secondary" onClick={() => setFiltroEspecialidad('')}>Limpiar</button></div>
-                </form>
-              </div>
-
               <div className="row g-3">
-                {doctoresFiltrados.length === 0 ? <div className="col-12"><div className="alert alert-light text-center">Sin doctores cargados.</div></div> : doctoresFiltrados.map((doctor) => (
+                {doctores.length === 0 ? <div className="col-12"><div className="alert alert-light text-center">Sin doctores cargados.</div></div> : doctores.map((doctor) => (
                   <div className="col-12 col-md-6 col-xl-4" key={doctor._id}>
                     <div className="card h-100 shadow-sm border-0">
                       <div className="card-body text-start d-flex flex-column">

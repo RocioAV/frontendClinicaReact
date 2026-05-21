@@ -251,6 +251,7 @@ export default function PatientDashboard() {
   }
 
   const onForgotPassword = () => navigate(`/paciente/${paciente?.dni}/resetear-password`)
+  const canChangePassword = !paciente?.uid_firebase
 
   const onLogout = async () => {
     await logout()
@@ -412,6 +413,15 @@ export default function PatientDashboard() {
             <hr className="my-2" />
             <div className="d-flex flex-column gap-2">
               <button className="btn btn-outline-primary d-flex align-items-center gap-2 w-100" onClick={abrirModalEditarPerfil} type="button"><i className="bi bi-pencil-square" /> Editar perfil</button>
+              {canChangePassword ? (
+                <button className="btn btn-outline-secondary d-flex align-items-center gap-2 w-100" onClick={onForgotPassword} type="button">
+                  <i className="bi bi-key" /> Cambiar contraseña
+                </button>
+              ) : (
+                <div className="small text-muted">
+                  <i className="bi bi-google me-1" />Tu cuenta está vinculada con Google.
+                </div>
+              )}
               
             </div>
           </div>
