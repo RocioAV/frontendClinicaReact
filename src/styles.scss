@@ -1,0 +1,158 @@
+@use "sass:color";
+
+@use "bootstrap/scss/bootstrap" as * with (
+  $primary: #4f46e5,
+  $secondary: #64748b,
+  $success: #10b981,
+  $info: #06b6d4,
+  $warning: #f59e0b,
+  $danger: #ef4444,
+  $light: #f8fafc,
+  $dark: #1e293b,
+  $font-family-sans-serif: ("Inter", "Segoe UI", Roboto, sans-serif),
+  $font-size-base: 1rem,
+  $line-height-base: 1.6,
+  $border-radius: 0.75rem,
+  $border-radius-sm: 0.5rem,
+  $border-radius-lg: 1rem,
+  $spacer: 1rem
+);
+
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+$purple-custom: #8b5cf6;
+$pink-custom: #ec4899;
+$orange-custom: #f97316;
+$teal-custom: #14b8a6;
+$indigo-custom: #6366f1;
+
+$custom-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$custom-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$custom-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+$custom-transition: all 0.2s ease-in-out;
+
+:root {
+  --bs-primary: #4f46e5;
+  --bs-secondary: #64748b;
+  --bs-success: #10b981;
+  --bs-info: #06b6d4;
+  --bs-warning: #f59e0b;
+  --bs-danger: #ef4444;
+  --bs-light: #f8fafc;
+  --bs-dark: #1e293b;
+}
+
+body {
+  font-family: $font-family-sans-serif;
+  line-height: $line-height-base;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.btn-custom {
+  background-color: $purple-custom;
+  border-color: $purple-custom;
+  color: white;
+
+  &:hover {
+    background-color: color.adjust($purple-custom, $lightness: -10%);
+    border-color: color.adjust($purple-custom, $lightness: -10%);
+  }
+}
+
+.text-purple { color: $purple-custom !important; }
+.text-pink { color: $pink-custom !important; }
+.text-orange { color: $orange-custom !important; }
+.text-teal { color: $teal-custom !important; }
+
+.bg-purple { background-color: $purple-custom !important; }
+.bg-pink { background-color: $pink-custom !important; }
+.bg-orange { background-color: $orange-custom !important; }
+.bg-teal { background-color: $teal-custom !important; }
+
+.card {
+  box-shadow: $custom-shadow;
+  transition: $custom-transition;
+
+  &:hover {
+    box-shadow: $custom-shadow-lg;
+    transform: translateY(-2px);
+  }
+}
+
+.btn {
+  transition: $custom-transition;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.app-main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+.app-main > * {
+  width: 100%;
+}
+
+.app-header {
+  backdrop-filter: blur(10px);
+}
+
+.app-header .navbar {
+  min-height: 72px;
+}
+
+.brand-link {
+  max-width: 100%;
+}
+
+.brand-mark,
+.footer-mark {
+  width: 42px;
+  height: 42px;
+  font-size: 0.95rem;
+}
+
+.brand-text {
+  color: #1e293b;
+  letter-spacing: 0.04em;
+}
+
+.nav-pill {
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem !important;
+}
+
+.nav-pill.active,
+.nav-pill:hover {
+  background-color: var(--bs-primary);
+  color: #fff !important;
+}
+
+.app-footer {
+  flex-shrink: 0;
+}
+
+.app-footer .footer-link {
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+}
+
+.app-footer .footer-link:hover {
+  color: #fff;
+  text-decoration: underline;
+}

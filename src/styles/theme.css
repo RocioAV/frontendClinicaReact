@@ -1,0 +1,58 @@
+:root {
+  --bs-primary: #4f46e5;
+  --bs-secondary: #64748b;
+  --bs-success: #10b981;
+  --bs-info: #06b6d4;
+  --bs-warning: #f59e0b;
+  --bs-danger: #ef4444;
+  --bs-light: #f8fafc;
+  --bs-dark: #1e293b;
+
+  --custom-purple: #8b5cf6;
+  --custom-pink: #ec4899;
+  --custom-orange: #f97316;
+  --custom-teal: #14b8a6;
+  --custom-indigo: #6366f1;
+
+  --card-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --card-shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  --transition-default: all 0.2s ease-in-out;
+}
+
+/* Apply base typography and spacing similar to original SCSS */
+body {
+  font-family: Inter, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+/* Custom utility classes from original styles.scss */
+.btn-custom {
+  background-color: var(--custom-purple) !important;
+  border-color: var(--custom-purple) !important;
+  color: #fff !important;
+  transition: var(--transition-default);
+}
+.btn-custom:hover {
+  filter: brightness(0.92);
+}
+
+.text-purple { color: var(--custom-purple) !important; }
+.text-pink { color: var(--custom-pink) !important; }
+.text-orange { color: var(--custom-orange) !important; }
+.text-teal { color: var(--custom-teal) !important; }
+
+.bg-purple { background-color: var(--custom-purple) !important; }
+.bg-pink { background-color: var(--custom-pink) !important; }
+.bg-orange { background-color: var(--custom-orange) !important; }
+.bg-teal { background-color: var(--custom-teal) !important; }
+
+.card {
+  box-shadow: var(--card-shadow);
+  transition: var(--transition-default);
+}
+.card:hover { box-shadow: var(--card-shadow-lg); transform: translateY(-2px); }
+
+/* Sticky footer / app shell helpers */
+html, body { height: 100%; }
+.app-shell { display:flex; flex-direction:column; min-height:100vh; }
+.main-content { flex:1; }
