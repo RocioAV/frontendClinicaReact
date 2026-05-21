@@ -59,6 +59,20 @@ export default function Header({ profile, isAuthenticated, logout }) {
               )}
             </ul>
 
+            {isAuthenticated && profile && (
+              <div className="d-lg-none border-top pt-3 mt-2 w-100">
+                <div className="px-2 pb-3">
+                  <div className="fw-semibold text-dark">{profile.nombre} {profile.apellido}</div>
+                  <div className="text-muted small mb-3">{roleLabel}</div>
+                  <div className="d-grid gap-2">
+                    <button className="btn btn-outline-danger rounded-pill" type="button" onClick={handleLogout}>
+                      <i className="bi bi-box-arrow-right me-2" />Cerrar sesión
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="d-flex align-items-center gap-3">
               {isAuthenticated && profile ? (
                 <div className="dropdown d-none d-lg-block">
